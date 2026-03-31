@@ -1,0 +1,63 @@
+default_workflow_ref: daily-ingestion
+
+workflows:
+  - id: daily-ingestion
+    name: "Daily Claim Ingestion"
+    description: "Ingest raw warranty claims, validate quality, calculate failure metrics, update baselines"
+    phases:
+      - ingest-claims
+      - validate-data-quality
+      - review-data-quality:
+          on_verdict:
+            rework:
+              target: ingest-claims
+            fail:
+              target: ingest-claims
+          max_rework_attempts: 2
+      - calculate-metrics
+      - update-baselines
+    post_success:
+      merge:
+        strategy: squash
+        target_branch: main
+        create_pr: true
+        auto_merge: true
+        cleanup_worktree: true
+
+  - id: weekly-analysis
+    name: "Weekly Pattern Analysis"
+    description: "Detect emerging failure patterns, cluster root causes, score suppliers, generate alerts"
+    phases:
+      - detect-patterns
+      - assess-severity:
+          on_verdict:
+            normal:
+              target: generate-weekly-alerts
+            rework:
+              target: detect-patterns
+          max_rework_attempts: 2
+      - cluster-root-causes
+      - score-suppliers
+      - generate-weekly-alerts
+    post_success:
+      merge:
+        strategy: squash
+        target_branch: main
+        create_pr: true
+        auto_merge: true
+        cleanup_worktree: true
+
+  - id: monthly-report
+    name: "Monthly Trend Report"
+    description: "Compute monthly aggregates, generate supplier scorecards and trend reports"
+    phases:
+      - calculate-monthly-stats
+      - generate-supplier-scorecards
+      - compile-trend-report
+    post_success:
+      merge:
+        strategy: squash
+        target_branch: main
+        create_pr: true
+        auto_merge: true
+        cleanup_worktree: true

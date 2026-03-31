@@ -1,0 +1,10 @@
+[
+  { "component_category": "powertrain", "benchmark_failure_rate_per_1000": 2.1, "source": "APQC 2023 Automotive Warranty Benchmark" },
+  { "component_category": "transmission", "benchmark_failure_rate_per_1000": 1.8, "source": "APQC 2023 Automotive Warranty Benchmark" },
+  { "component_category": "electrical", "benchmark_failure_rate_per_1000": 3.4, "source": "APQC 2023 Automotive Warranty Benchmark" },
+  { "component_category": "suspension", "benchmark_failure_rate_per_1000": 2.7, "source": "APQC 2023 Automotive Warranty Benchmark" },
+  { "component_category": "brakes", "benchmark_failure_rate_per_1000": 1.5, "source": "APQC 2023 Automotive Warranty Benchmark" },
+  { "component_category": "fuel_system", "benchmark_failure_rate_per_1000": 1.2, "source": "APQC 2023 Automotive Warranty Benchmark" },
+  { "component_category": "cooling", "benchmark_failure_rate_per_1000": 1.9, "source": "APQC 2023 Automotive Warranty Benchmark" },
+  { "component_category": "steering", "benchmark_failure_rate_per_1000": 0.9, "source": "APQC 2023 Automotive Warranty Benchmark" }
+]

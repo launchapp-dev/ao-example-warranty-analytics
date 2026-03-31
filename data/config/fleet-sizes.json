@@ -1,0 +1,18 @@
+[
+  { "part_number": "ENG-0421-A", "model_year": 2022, "fleet_size": 45000 },
+  { "part_number": "ENG-0421-A", "model_year": 2021, "fleet_size": 42000 },
+  { "part_number": "ENG-0421-A", "model_year": 2023, "fleet_size": 38000 },
+  { "part_number": "TRANS-0811-B", "model_year": 2022, "fleet_size": 31000 },
+  { "part_number": "TRANS-0811-B", "model_year": 2021, "fleet_size": 28000 },
+  { "part_number": "TRANS-0811-B", "model_year": 2023, "fleet_size": 29000 },
+  { "part_number": "COOL-1101-C", "model_year": 2022, "fleet_size": 18000 },
+  { "part_number": "COOL-1101-C", "model_year": 2023, "fleet_size": 14000 },
+  { "part_number": "BRAKE-0231-D", "model_year": 2021, "fleet_size": 25000 },
+  { "part_number": "BRAKE-0231-D", "model_year": 2022, "fleet_size": 22000 },
+  { "part_number": "STEER-0551-E", "model_year": 2022, "fleet_size": 19000 },
+  { "part_number": "STEER-0551-E", "model_year": 2023, "fleet_size": 16000 },
+  { "part_number": "FUEL-0301-F", "model_year": 2021, "fleet_size": 20000 },
+  { "part_number": "FUEL-0301-F", "model_year": 2022, "fleet_size": 22000 },
+  { "part_number": "FUEL-0301-F", "model_year": 2023, "fleet_size": 18000 },
+  { "part_number": "SUSP-0121-G", "model_year": 2022, "fleet_size": 15000 }
+]

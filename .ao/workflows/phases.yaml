@@ -1,0 +1,197 @@
+phases:
+  # === Daily Ingestion Phases ===
+
+  ingest-claims:
+    mode: agent
+    agent: claim-parser
+    directive: |
+      Read all raw claim files from data/claims/raw/ (CSV and JSON).
+      Normalize every record to the standard schema, deduplicate by claim_id,
+      and validate required fields. Write normalized records to data/claims/normalized.json
+      and quality statistics to data/claims/quality-report.json.
+    capabilities:
+      mutates_state: true
+      writes_files: true
+
+  validate-data-quality:
+    mode: command
+    command:
+      program: python3
+      args: ["-c", "exec(open('scripts/validate-data-quality.py').read())"]
+      cwd_mode: task_root
+      timeout_secs: 120
+    capabilities:
+      mutates_state: true
+      writes_files: true
+
+  review-data-quality:
+    mode: agent
+    agent: claim-parser
+    directive: |
+      Read data/claims/quality-report.json. Evaluate whether the ingested data
+      meets quality thresholds:
+      - Field completeness must be > 95%
+      - Duplicate rate must be < 2%
+      - Parse error rate must be < 5%
+
+      If thresholds are met, verdict: pass.
+      If thresholds are NOT met but the issues are fixable by re-ingesting
+      with adjusted parsing, verdict: rework.
+      If the raw data itself is fundamentally broken, verdict: fail.
+    capabilities:
+      mutates_state: false
+      writes_files: false
+    decision_contract:
+      required_fields: [verdict, reasoning, quality_summary]
+      valid_verdicts: [pass, rework, fail]
+
+  calculate-metrics:
+    mode: agent
+    agent: failure-analyst
+    directive: |
+      Read data/claims/normalized.json. Aggregate claims by part number, model year,
+      and supplier. Calculate failure rates (claims per 1000 units) and MTTF
+      (mean mileage at failure) for each part number. Compare to historical baselines
+      in data/baselines/historical.json if available.
+
+      Write results to:
+      - data/metrics/aggregations.json
+      - data/metrics/failure-rates.json
+      - data/metrics/mttf.json
+    capabilities:
+      mutates_state: true
+      writes_files: true
+
+  update-baselines:
+    mode: command
+    command:
+      program: python3
+      args: ["-c", "exec(open('scripts/update-baselines.py').read())"]
+      cwd_mode: task_root
+      timeout_secs: 120
+    capabilities:
+      mutates_state: true
+      writes_files: true
+
+  # === Weekly Analysis Phases ===
+
+  detect-patterns:
+    mode: agent
+    agent: pattern-detector
+    directive: |
+      Analyze current failure metrics against historical baselines to detect
+      emerging patterns. Look for rate spikes, MTTF degradation, temporal clusters,
+      geographic clusters, and new failure modes.
+
+      Read: data/metrics/failure-rates.json, data/metrics/mttf.json,
+            data/metrics/aggregations.json, data/baselines/historical.json
+      Write: data/patterns/detected-patterns.json
+    capabilities:
+      mutates_state: true
+      writes_files: true
+
+  assess-severity:
+    mode: agent
+    agent: pattern-detector
+    directive: |
+      Read data/patterns/detected-patterns.json. For each detected pattern,
+      classify severity as one of: critical-recall, field-action, monitor, normal.
+
+      Consider: safety implications, affected population size, cost trajectory,
+      statistical confidence of the pattern signal.
+
+      Verdict determines routing:
+      - critical-recall or field-action: proceed to root cause analysis
+      - monitor: proceed to root cause analysis (lighter touch)
+      - normal: skip to report generation
+
+      Write alerts for critical/field-action to data/patterns/alerts.json.
+    capabilities:
+      mutates_state: true
+      writes_files: true
+    decision_contract:
+      required_fields: [verdict, reasoning, patterns_classified]
+      valid_verdicts: [critical-recall, field-action, monitor, normal]
+
+  cluster-root-causes:
+    mode: agent
+    agent: root-cause-clusterer
+    directive: |
+      Group detected failure patterns into root-cause clusters. Link failures
+      by symptom similarity, temporal correlation, supplier linkage, and batch overlap.
+      Determine most likely root cause category for each cluster.
+
+      Read: data/patterns/detected-patterns.json, data/claims/normalized.json,
+            data/metrics/aggregations.json
+      Write: data/clusters/root-causes.json
+    capabilities:
+      mutates_state: true
+      writes_files: true
+
+  score-suppliers:
+    mode: agent
+    agent: root-cause-clusterer
+    directive: |
+      Calculate supplier quality scores (0-100) based on failure rates, distinct
+      failure modes, trend direction, pattern severity, and historical performance.
+      Flag suppliers scoring below 60 for quality audit. Identify repeat offenders.
+
+      Read: data/clusters/root-causes.json, data/metrics/aggregations.json,
+            data/baselines/historical.json
+      Write: data/clusters/supplier-issues.json
+    capabilities:
+      mutates_state: true
+      writes_files: true
+
+  generate-weekly-alerts:
+    mode: agent
+    agent: report-generator
+    directive: |
+      Compile early warning alerts and supplier issue summaries for the week.
+      Read all available data from data/patterns/ and data/clusters/.
+      Write reports/early-warnings.md with critical alerts prioritized at top.
+    capabilities:
+      mutates_state: true
+      writes_files: true
+      requires_commit: true
+
+  # === Monthly Report Phases ===
+
+  calculate-monthly-stats:
+    mode: command
+    command:
+      program: python3
+      args: ["-c", "exec(open('scripts/calculate-monthly-stats.py').read())"]
+      cwd_mode: task_root
+      timeout_secs: 180
+    capabilities:
+      mutates_state: true
+      writes_files: true
+
+  generate-supplier-scorecards:
+    mode: agent
+    agent: report-generator
+    directive: |
+      Generate per-supplier quality scorecards with scores, grades, trends,
+      top failure modes, and recovery cost estimates. Read supplier data from
+      data/clusters/supplier-issues.json and metrics from data/metrics/.
+      Write reports/supplier-scorecards.md and reports/recovery-estimates.md.
+    capabilities:
+      mutates_state: true
+      writes_files: true
+
+  compile-trend-report:
+    mode: agent
+    agent: report-generator
+    directive: |
+      Write the monthly warranty trend report. Include executive summary,
+      top 10 failing parts, cost analysis, year-over-year comparison,
+      and new patterns detected this period.
+
+      Read: data/metrics/monthly-summary.json, data/metrics/failure-rates.json,
+            data/baselines/historical.json, data/patterns/detected-patterns.json
+      Write: reports/monthly-trends.md
+    capabilities:
+      mutates_state: true
+      writes_files: true
+      requires_commit: true

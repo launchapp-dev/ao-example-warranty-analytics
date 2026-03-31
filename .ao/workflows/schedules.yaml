@@ -1,0 +1,15 @@
+schedules:
+  - id: daily-claim-ingestion
+    cron: "0 6 * * *"
+    workflow_ref: daily-ingestion
+    enabled: true
+
+  - id: weekly-pattern-analysis
+    cron: "0 8 * * 1"
+    workflow_ref: weekly-analysis
+    enabled: true
+
+  - id: monthly-trend-report
+    cron: "0 9 1 * *"
+    workflow_ref: monthly-report
+    enabled: true
